@@ -1,0 +1,9 @@
+upload:
+  md-img-path: D:/毕设/Code/files
+  path: D:/毕设/Code/uploads
+
+file-path:
+  server-log: D:/毕设/Code/logs
+
+log:
+  path: ${file-path.server-log}

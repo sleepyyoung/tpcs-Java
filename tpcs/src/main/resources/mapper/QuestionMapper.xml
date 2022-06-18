@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tpcs.dao.QuestionMapper">
+    <resultMap id="questionMap" type="question">
+        <result column="question_info_id" property="id"/>
+        <result column="SCORE" property="score"/>
+        <result column="QUESTION_MD" property="questionMd"/>
+        <result column="QUESTION_TXT" property="questionTxt"/>
+        <result column="QUESTION_HTML" property="questionHtml"/>
+        <result column="ANSWER_MD" property="answerMd"/>
+        <result column="ANSWER_TXT" property="answerTxt"/>
+        <result column="ANSWER_HTML" property="answerHtml"/>
+        <association column="user_info_id" property="user" javaType="tpcs.pojo.User">
+            <result column="user_info_id" property="id"/>
+            <result column="user_info_username" property="username"/>
+            <result column="user_info_email" property="email"/>
+        </association>
+        <association property="type" column="question_type_id" javaType="questionType">
+            <result column="question_type_id" property="id"/>
+            <result column="question_type_name" property="name"/>
+        </association>
+        <association property="difficulty" column="question_difficulty_id" javaType="questionDifficulty">
+            <result column="question_difficulty_id" property="id"/>
+            <result column="question_difficulty_name" property="name"/>
+        </association>
+        <association property="course" column="course_id_" javaType="course">
+            <result property="id" column="course_id_"/>
+            <result property="name" column="course_name"/>
+        </association>
+    </resultMap>
+
+    <update id="batchRemoveQuestion2Garbage" parameterType="list">
+        UPDATE question_info
+        SET REMOVED = 1
+        where ID in
+        <foreach open="(" close=")" collection="list" item="id" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <sql id="queryBy">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.ID         question_type_id,
+               question_type.NAME       question_type_name,
+               question_difficulty.ID   question_difficulty_id,
+               question_difficulty.NAME question_difficulty_name,
+               course.ID                course_id_,
+               course.NAME              course_name,
+               QUESTION_TXT
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.REMOVED = 0
+    </sql>
+
+    <select id="questionList" resultMap="questionMap">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.ID         question_type_id,
+               question_type.NAME       question_type_name,
+               question_difficulty.ID   question_difficulty_id,
+               question_difficulty.NAME question_difficulty_name,
+               course.ID                course_id_,
+               course.NAME              course_name,
+               QUESTION_MD,
+               QUESTION_TXT,
+               QUESTION_HTML,
+               ANSWER_MD,
+               ANSWER_TXT,
+               ANSWER_HTML
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+    </select>
+
+    <select id="questionListSimple" resultMap="questionMap">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.NAME       question_type_name,
+               question_difficulty.NAME question_difficulty_name,
+               course.NAME              course_name,
+               QUESTION_TXT
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.REMOVED = 0
+    </select>
+
+    <select id="getQuestionById" resultMap="questionMap">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.ID         question_type_id,
+               question_type.NAME       question_type_name,
+               question_difficulty.ID   question_difficulty_id,
+               question_difficulty.NAME question_difficulty_name,
+               course.ID                course_id_,
+               course.NAME              course_name,
+               QUESTION_MD,
+               QUESTION_TXT,
+               QUESTION_HTML,
+               ANSWER_MD,
+               ANSWER_TXT,
+               ANSWER_HTML
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.REMOVED = 0
+          and question_info.ID = #{id}
+    </select>
+
+    <select id="queryByScore" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="score != null">
+                and SCORE = #{score}
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="min == null">
+                        and SCORE &lt;= #{max}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="max == null">
+                                and SCORE &gt;= #{min}
+                            </when>
+                            <otherwise>
+                                and SCORE &gt;= #{min} and SCORE &lt;= #{max}
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryByType" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="type != 0">
+                and question_type.ID = #{type}
+            </when>
+        </choose>
+    </select>
+
+    <select id="queryByDifficulty" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="difficulty != 0">
+                and question_difficulty.ID = #{difficulty}
+            </when>
+        </choose>
+    </select>
+
+    <select id="queryByCourse" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="course != 0">
+                and course.ID = #{course}
+            </when>
+        </choose>
+    </select>
+
+    <!-- 全文索引在表结构更新后需要删除重建！！！ -->
+    <!--    ALTER TABLE question_info
+              ADD FULLTEXT INDEX fti_question_info_ngram (QUESTION_TXT) WITH PARSER ngram;   -->
+    <select id="queryByQuestionContent" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <if test="content != null">
+            and MATCH(QUESTION_TXT) AGAINST(#{content} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <!-- 全文索引在表结构更新后需要删除重建！！！ -->
+    <!--    ALTER TABLE question_info
+            ADD FULLTEXT INDEX fti_answer_info_ngram (ANSWER_TXT) WITH PARSER ngram;   -->
+    <select id="queryByAnswerContent" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <if test="content != null">
+            and MATCH(ANSWER_TXT) AGAINST(#{content} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <select id="queryByAnything" resultMap="questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="score != null">
+                and SCORE = #{score}
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="min == null">
+                        <if test="max != null">
+                            and SCORE &lt;= #{max}
+                        </if>
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="max == null">
+                                and SCORE &gt;= #{min}
+                            </when>
+                            <otherwise>
+                                and SCORE &gt;= #{min} and SCORE &lt;= #{max}
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="type != 0">
+                and question_type.ID = #{type}
+            </when>
+        </choose>
+        <choose>
+            <when test="difficulty != 0">
+                and question_difficulty.ID = #{difficulty}
+            </when>
+        </choose>
+        <choose>
+            <when test="course != 0">
+                and course.ID = #{course}
+            </when>
+        </choose>
+        <if test="questionContent != null">
+            and MATCH(QUESTION_TXT) AGAINST(#{questionContent} IN BOOLEAN MODE)
+        </if>
+        <if test="answerContent != null">
+            and MATCH(ANSWER_TXT) AGAINST(#{answerContent} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <select id="queryByUserId" resultMap="questionMap">
+        <include refid="queryBy"/>
+        and USER_ID = #{userId}
+    </select>
+
+    <select id="questionBankTypeList" resultType="questionBankType">
+        select *
+        from (
+                 select type.ID         type_id,
+                        type.NAME       type,
+                        difficulty.ID   difficulty_id,
+                        difficulty.NAME difficulty,
+                        SCORE,
+                        count(*)        num
+                 from question_info
+                          left join question_type_info type on type.ID = question_info.TYPE_ID
+                          left join question_difficulty_info difficulty on difficulty.ID = question_info.DIFFICULTY_ID
+                 where COURSE_ID = #{id}
+                   and REMOVED = 0
+                 group by type.ID, difficulty.ID, SCORE
+             ) temp
+        order by temp.type_id, temp.difficulty_id
+    </select>
+
+    <select id="getQuestionCountByCourseIdAndQuestionTypeAndScoreAndDifficulty" resultType="java.lang.Integer">
+        select count(*)
+        from question_info
+        where REMOVED = 0
+        and TYPE_ID = #{typeId}
+        and SCORE = #{score}
+        and DIFFICULTY_ID = #{difficultyId}
+        <if test="courseId != null">
+            <if test="courseId > 0">
+                and COURSE_ID = #{courseId}
+            </if>
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,9 @@
+upload:
+  md-img-path: D:/tpcs/files
+  path: D:/tpcs/uploads
+
+file-path:
+  server-log: D:/tpcs/logs
+
+log:
+  path: ${file-path.server-log}

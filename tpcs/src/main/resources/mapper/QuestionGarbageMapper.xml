@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tpcs.dao.QuestionGarbageMapper">
+    <sql id="queryBy">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.ID         question_type_id,
+               question_type.NAME       question_type_name,
+               question_difficulty.ID   question_difficulty_id,
+               question_difficulty.NAME question_difficulty_name,
+               course.ID                course_id_,
+               course.NAME              course_name,
+               QUESTION_TXT
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.REMOVED = 1
+    </sql>
+
+    <delete id="batchDeleteQuestion" parameterType="list">
+        DELETE FROM question_info
+        where ID in
+        <foreach open="(" close=")" collection="list" item="id" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="questionGarbageListSimple" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.NAME       question_type_name,
+               question_difficulty.NAME question_difficulty_name,
+               course.NAME              course_name,
+               QUESTION_TXT
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.REMOVED = 1
+    </select>
+
+    <select id="getQuestionById" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        select question_info.ID         question_info_id,
+               SCORE,
+               user_info.ID             user_info_id,
+               user_info.USERNAME       user_info_username,
+               user_info.EMAIL          user_info_email,
+               question_type.ID         question_type_id,
+               question_type.NAME       question_type_name,
+               question_difficulty.ID   question_difficulty_id,
+               question_difficulty.NAME question_difficulty_name,
+               course.ID                course_id_,
+               course.NAME              course_name,
+               QUESTION_MD,
+               QUESTION_TXT,
+               QUESTION_HTML,
+               ANSWER_MD,
+               ANSWER_TXT,
+               ANSWER_HTML
+        from question_info
+                 left join user_info on question_info.USER_ID = user_info.ID
+                 left join question_difficulty_info question_difficulty
+                           on question_info.DIFFICULTY_ID = question_difficulty.ID
+                 left join question_type_info question_type on question_info.TYPE_ID = question_type.ID
+                 left join course_info course on course.ID = question_info.COURSE_ID
+        where question_info.ID = #{id}
+          and question_info.REMOVED = 1
+    </select>
+
+    <select id="queryByScore" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="score != null">
+                and SCORE = #{score}
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="min == null">
+                        and SCORE &lt;= #{max}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="max == null">
+                                and SCORE &gt;= #{min}
+                            </when>
+                            <otherwise>
+                                and SCORE &gt;= #{min} and SCORE &lt;= #{max}
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+    </select>
+
+    <select id="queryByType" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="type != 0">
+                and question_type.ID = #{type}
+            </when>
+        </choose>
+    </select>
+
+    <select id="queryByDifficulty" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="difficulty != 0">
+                and question_difficulty.ID = #{difficulty}
+            </when>
+        </choose>
+    </select>
+
+    <select id="queryByCourse" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="course != 0">
+                and course.ID = #{course}
+            </when>
+        </choose>
+    </select>
+
+    <!--    ALTER TABLE question_info
+            ADD FULLTEXT INDEX fti_answer_info_ngram (QUESTION_TXT) WITH PARSER ngram;   -->
+    <select id="queryByQuestionContent" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <if test="content != null">
+            and MATCH(QUESTION_TXT) AGAINST(#{content} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <!--    ALTER TABLE question_info
+            ADD FULLTEXT INDEX fti_answer_info_ngram (ANSWER_TXT) WITH PARSER ngram;   -->
+    <select id="queryByAnswerContent" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <if test="content != null">
+            and MATCH(ANSWER_TXT) AGAINST(#{content} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <select id="queryByAnything" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        <choose>
+            <when test="score != null">
+                and SCORE = #{score}
+            </when>
+            <otherwise>
+                <choose>
+                    <when test="min == null">
+                        <if test="max != null">
+                            and SCORE &lt;= #{max}
+                        </if>
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="max == null">
+                                and SCORE &gt;= #{min}
+                            </when>
+                            <otherwise>
+                                and SCORE &gt;= #{min} and SCORE &lt;= #{max}
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </otherwise>
+        </choose>
+        <choose>
+            <when test="type != 0">
+                and question_type.ID = #{type}
+            </when>
+        </choose>
+        <choose>
+            <when test="difficulty != 0">
+                and question_difficulty.ID = #{difficulty}
+            </when>
+        </choose>
+        <choose>
+            <when test="course != 0">
+                and course.ID = #{course}
+            </when>
+        </choose>
+        <if test="questionContent != null">
+            and MATCH(QUESTION_TXT) AGAINST(#{questionContent} IN BOOLEAN MODE)
+        </if>
+        <if test="answerContent != null">
+            and MATCH(ANSWER_TXT) AGAINST(#{answerContent} IN BOOLEAN MODE)
+        </if>
+    </select>
+
+    <select id="queryByUserId" resultMap="tpcs.dao.QuestionMapper.questionMap">
+        <include refid="queryBy"/>
+        and USER_ID = #{userId}
+    </select>
+
+    <update id="batchRecoverQuestion">
+        UPDATE question_info
+        SET REMOVED = 0
+        where ID in
+        <foreach open="(" close=")" collection="list" item="id" separator=",">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

@@ -1,0 +1,52 @@
+spring:
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.web.servlet.MultipartAutoConfiguration
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/tpcs?useSSL=true&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useAffectedRows=true&allowMultiQueries=true
+      username: root
+      password: 19834044876
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    password: 19834044876
+    subpub:
+      topic:
+        register: register
+  mail:
+    from: 1696589321@qq.com
+    host: smtp.qq.com
+    username: 1696589321@qq.com
+    password: reivzpjdtrffcjdc
+    port: 465
+    protocol: smtp
+    default-encoding: utf-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            enable: true
+          socketFactory:
+            port: 465
+            class: javax.net.ssl.SSLSocketFactory
+
+mybatis:
+  mapper-locations: classpath:mapper/*Mapper.xml
+  type-aliases-package: tpcs.pojo
+
+pagehelper:
+  helper-dialect: mysql
+  support-methods-arguments: true

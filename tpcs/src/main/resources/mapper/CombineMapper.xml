@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="tpcs.dao.CombineMapper">
+    <select id="queryIdListByTypeIdAndDifficultyIdAndScore" resultType="java.lang.Integer">
+        select ID
+        from question_info
+        where TYPE_ID = #{typeId}
+          and DIFFICULTY_ID = #{difficultyId}
+          and SCORE = #{score}
+          and COURSE_ID = #{courseId}
+          and REMOVED = 0
+    </select>
+
+    <select id="queryIdListByTypeIdAndDifficultyId" resultType="java.lang.Integer">
+        select ID
+        from question_info
+        where TYPE_ID = #{typeId}
+          and DIFFICULTY_ID = #{difficultyId}
+          and COURSE_ID = #{courseId}
+          and REMOVED = 0
+    </select>
+</mapper>
